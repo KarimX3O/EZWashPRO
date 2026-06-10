@@ -164,10 +164,6 @@ function clearAll() {
   if (receiptId) receiptId.textContent = "----";
   totalPrice = 0;
   selectedNumber = null;
-  const whatsappNum = document.getElementById("whatsappNumber");
-  const clientName = document.getElementById("nameclione");
-  if (whatsappNum) whatsappNum.value = "";
-  if (clientName) clientName.value = "";
   document.querySelectorAll('.numbers button').forEach(btn => btn.classList.remove('selected'));
 }
 
