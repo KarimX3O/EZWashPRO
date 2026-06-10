@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <title>الورقة الذكية</title>
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://karimx3o.github.io/pressingApp2/karim.png"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="style.css" type="text/css" media="all" />
+  </head>
+
+  <body>
+    <!-- الأزرار العلوية -->
+    <div id="hiding">
+      <button onclick="showReceipts()" id="click-btn">
+        <img src="images/file.png" alt="" />
+        عرض الوصولات
+      </button>
+
+      <button
+        onclick="showRecei()"
+        id="click-btn"
+        style="
+          width: 50px;
+          height: 50px;
+          border-radius: 50px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        "
+      >
+        <img src="images/cog.png" alt="" style="width: 35px; height: 35px" />
+      </button>
+
+      <button
+        onclick="stats()"
+        id="click-btn"
+        style="
+          width: 50px;
+          height: 50px;
+          border-radius: 50px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        "
+      >
+        <img src="images/cog1.png" alt="" style="width: 35px; height: 35px" />
+      </button>
+    </div>
+
+    <!-- تقسيم الصفحة إلى جوج (الجوز 1 + الجوز 2) -->
+    <div class="container">
+      <!-- الجوز 1 -->
+      <div id="aljoz1">
+        <div class="info-row">
+          <div>📅 التاريخ: <span id="todayDate"></span></div>
+          <div id="ido">🆔 رقم الوصل: <span id="receiptId">----</span></div>
+        </div>
+
+        <div id="clin" style="display: flex; justify-content: space-between">
+          <input type="tel" id="whatsappNumber" placeholder="أدخل رقم واتساب" />
+          <input type="text" id="nameclione" placeholder="أدخل اسم الزبون" />
+        </div>
+
+        <textarea
+          id="output"
+          placeholder="الملابس المختارة..."
+          readonly
+        ></textarea>
+
+        <div class="options">
+          <label>
+            <input type="checkbox" id="fastWash" />
+            غير مدفوع
+          </label>
+          <label>
+            <input type="checkbox" id="paid" />
+            تم الدفع
+          </label>
+        </div>
+
+        <div class="actions">
+          <button class="clear" onclick="clearAll()">مسح الكل</button>
+          <button class="print" onclick="sendToWhatsapp()">
+            📲 إرسال واتساب
+          </button>
+        </div>
+
+        <div class="total" id="total">المجموع: 0 درهم</div>
+      </div>
+
+      <!-- الجوز 2 -->
+      <div id="aljoz2">
+        <div class="tabs">
+          <div class="tab active" onclick="showCategory('m')">التحداد</div>
+          <div class="tab" onclick="showCategory('s')">
+            🧼 التصبين+التحداد
+          </div>
+          <div class="tab" onclick="showCategory('sb')">🟣الصباغة</div>
+        </div>
+
+        <div class="numbers">
+          <button onclick="selectNumber(1)">1</button>
+          <button onclick="selectNumber(2)">2</button>
+          <button onclick="selectNumber(3)">3</button>
+          <button onclick="selectNumber(4)">4</button>
+          <button onclick="selectNumber(5)">5</button>
+          <button onclick="selectNumber(6)">6</button>
+          <button onclick="selectNumber(7)">7</button>
+          <button onclick="selectNumber(8)">8</button>
+          <button onclick="selectNumber(9)">9</button>
+        </div>
+
+        <div class="items" id="itemsContainer"></div>
+
+        <!-- زر الإضافة -->
+        <button
+          onclick="addNewItem()"
+          style="margin: 10px; padding: 5px 10px; font-size: 18px; border-radius: 8px"
+        >
+          ➕
+        </button>
+
+        <!-- زر التعديل -->
+        <button
+          onclick="editItemPrice()"
+          style="margin: 10px; padding: 5px 10px; font-size: 18px; border-radius: 8px"
+        >
+          ✏️
+        </button>
+      </div>
+    </div>
+
+    <!-- قائمة الوصولات -->
+    <div
+      id="receiptsList"
+      style="
+        margin: 20px;
+        padding: 10px;
+        background: #eee;
+        border-radius: 10px;
+        display: none;
+      "
+    >
+      <h3>📜 قائمة الوصولات السابقة:</h3>
+      <ul id="receiptsUl" style="list-style: none; padding: 0"></ul>
+    </div>
+
+    <script>
+      function showR() {
+        window.location.href = "ind2.html";
+      }
+    </script>
+    <script src="db.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,42 @@
+ body{
+      font-family: Arial;
+      direction: rtl;
+      background:#f4f4f4;
+      padding:20px;
+    }
+.box{
+    background:#fff;
+    padding:15px;
+    margin-bottom:10px;
+    border-radius:8px;
+    font-size:18px;
+}
+h3{
+    color: rgb(0, 153, 59);
+    font-size: 80px;
+}
+p{
+    font-size: 36px;
+}
+#totalAll{
+    background-color: #2ac28fd9;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: #fff;
+    font-size: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#unpaidTotal{
+    background-color: #f89494;
+    color: white;
+}
+#edit-btn {
+  background-color: #12acf3;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  font-size: 13px;
+  border-radius: 5px;
+  cursor: pointer;
+}

@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إحصائيات المصبنة</title>
+  <style>
+    :root {
+      --ink:    #0f1923;
+      --slate:  #1e2d3d;
+      --blue:   #2563eb;
+      --blue-l: #dbeafe;
+      --green:  #16a34a;
+      --green-l:#dcfce7;
+      --red:    #dc2626;
+      --red-l:  #fee2e2;
+      --amber:  #d97706;
+      --amber-l:#fef3c7;
+      --gray:   #64748b;
+      --bg:     #f1f5f9;
+      --card:   #ffffff;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* ══ HEADER ══ */
+    .header {
+      background: var(--slate);
+      color: white;
+      padding: 18px 20px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.3px; }
+    .back-btn {
+      background: rgba(255,255,255,0.12);
+      color: white;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.22); }
+
+    /* ══ TABS ══ */
+    .tabs {
+      display: flex;
+      background: var(--card);
+      border-bottom: 2px solid #e2e8f0;
+      padding: 0 16px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 14px 0;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    /* ══ CONTENT ══ */
+    .page { display: none; padding: 16px; }
+    .page.active { display: block; }
+
+    /* ══ STAT GRID ══ */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .stat-card.wide { grid-column: span 2; }
+    .stat-card .s-label { font-size: 12px; color: var(--gray); margin-bottom: 6px; }
+    .stat-card .s-value { font-size: 26px; font-weight: 800; color: var(--ink); line-height: 1; }
+    .stat-card .s-unit  { font-size: 13px; color: var(--gray); margin-top: 4px; }
+    .stat-card.blue  { background: var(--blue-l); }
+    .stat-card.green { background: var(--green-l); }
+    .stat-card.red   { background: var(--red-l); }
+    .stat-card.amber { background: var(--amber-l); }
+    .stat-card.blue  .s-value { color: var(--blue); }
+    .stat-card.green .s-value { color: var(--green); }
+    .stat-card.red   .s-value { color: var(--red); }
+    .stat-card.amber .s-value { color: var(--amber); }
+
+    /* ══ ITEMS RANKING ══ */
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 18px 0 10px;
+    }
+    .item-row {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .item-rank {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--blue-l);
+      color: var(--blue);
+      font-weight: 800;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .item-rank.gold   { background: #fef3c7; color: #b45309; }
+    .item-rank.silver { background: #f1f5f9; color: #475569; }
+    .item-rank.bronze { background: #fde8d8; color: #c2510a; }
+    .item-name { flex: 1; font-size: 14px; font-weight: 600; }
+    .item-bar-wrap { flex: 2; height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+    .item-bar { height: 100%; background: var(--blue); border-radius: 99px; transition: width 0.6s ease; }
+    .item-count { font-size: 13px; font-weight: 700; color: var(--gray); min-width: 30px; text-align: left; }
+
+    /* ══ DEBTS TAB ══ */
+    .debt-summary {
+      background: var(--red-l);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .debt-summary .ds-label { font-size: 13px; color: var(--red); font-weight: 600; }
+    .debt-summary .ds-value { font-size: 28px; font-weight: 900; color: var(--red); }
+
+    .client-debt-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+    .cdc-header {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .cdc-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--slate);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800;
+      flex-shrink: 0;
+    }
+    .cdc-info { flex: 1; }
+    .cdc-name { font-size: 15px; font-weight: 700; }
+    .cdc-phone { font-size: 12px; color: var(--gray); }
+    .cdc-debt-badge {
+      background: var(--red-l);
+      color: var(--red);
+      font-weight: 800;
+      font-size: 14px;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    .cdc-debt-badge.paid-off {
+      background: var(--green-l);
+      color: var(--green);
+    }
+    .cdc-chevron { color: var(--gray); font-size: 16px; transition: transform 0.3s; }
+    .client-debt-card.open .cdc-chevron { transform: rotate(180deg); }
+
+    .cdc-body {
+      display: none;
+      border-top: 1px solid #f0f0f0;
+      padding: 14px 16px;
+    }
+    .client-debt-card.open .cdc-body { display: block; }
+
+    /* وصولات الديون */
+    .debt-receipt {
+      background: #f8f9fb;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      line-height: 1.8;
+      border-right: 3px solid var(--red);
+    }
+    .debt-receipt.partially-paid { border-right-color: var(--amber); }
+
+    /* أزرار الدفع */
+    .pay-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .pay-btn {
+      flex: 1;
+      min-width: 110px;
+      padding: 9px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .pay-btn:hover { opacity: 0.85; }
+    .pay-btn.full  { background: var(--green); color: white; }
+    .pay-btn.part  { background: var(--amber); color: white; }
+
+    /* شريط الدين المتبقي */
+    .debt-progress-wrap {
+      margin-top: 10px;
+    }
+    .debt-progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--gray);
+      margin-bottom: 4px;
+    }
+    .debt-progress-bar {
+      height: 7px;
+      background: #e2e8f0;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .debt-progress-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 99px;
+      transition: width 0.5s ease;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--slate);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 999;
+      transition: transform 0.35s ease;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px;
+    }
+    .modal h3 { font-size: 17px; margin-bottom: 16px; }
+    .modal input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      margin-bottom: 14px;
+      outline: none;
+    }
+    .modal input:focus { border-color: var(--blue); }
+    .modal-btns { display: flex; gap: 10px; }
+    .modal-btns button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .modal-btns .confirm { background: var(--blue); color: white; }
+    .modal-btns .cancel  { background: #f1f5f9; color: var(--ink); }
+
+    .empty { text-align: center; color: var(--gray); padding: 40px 20px; font-size: 15px; }
+
+    #debtSearch {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 15px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: var(--card);
+    }
+    #debtSearch:focus { border-color: var(--blue); }  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 لوحة الإحصائيات</h1>
+  <button class="back-btn" onclick="window.location.href='index.html'">← رئيسية</button>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('stats', this)">الإحصائيات</button>
+  <button class="tab-btn" onclick="switchTab('debts', this)">الديون</button>
+</div>
+
+<!-- ══ TAB: STATS ══ -->
+<div class="page active" id="page-stats">
+  <div class="stat-grid">
+    <div class="stat-card wide green">
+      <div class="s-label">💰 إجمالي المداخيل</div>
+      <div class="s-value" id="s-totalAll">—</div>
+      <div class="s-unit">درهم</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="s-label">🧾 الوصولات</div>
+      <div class="s-value" id="s-count">—</div>
+      <div class="s-unit">وصل</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="s-label">⚡ سريع</div>
+      <div class="s-value" id="s-fast">—</div>
+      <div class="s-unit">طلب</div>
+    </div>
+    <div class="stat-card green">
+      <div class="s-label">✅ مدفوع</div>
+      <div class="s-value" id="s-paid">—</div>
+      <div class="s-unit">وصل</div>
+    </div>
+    
+  </div>
+
+  <div class="section-title">👕 ترتيب القطع حسب الطلب</div>
+  <div id="items-ranking"></div>
+</div>
+
+<!-- ══ TAB: DEBTS ══ -->
+<div class="page" id="page-debts">
+  <div class="debt-summary">
+    <div>
+      <div class="ds-label">إجمالي الديون المتبقية</div>
+      <div style="font-size:12px;color:var(--red);margin-top:2px" id="d-clients-count"></div>
+    </div>
+    <div class="ds-value" id="d-totalDebt">—</div>
+  </div>
+  <input type="text" id="debtSearch" placeholder="🔎 ابحث عن مديون بالاسم أو الرقم..." oninput="renderDebts()">
+  <div id="debts-container"></div>
+</div>
+
+<!-- Modal الدفع الجزئي -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>💳 دفع جزئي</h3>
+    <input type="number" id="modal-input" placeholder="المبلغ المدفوع (درهم)" min="1">
+    <div class="modal-btns">
+      <button class="confirm" onclick="confirmPartial()">تأكيد</button>
+      <button class="cancel" onclick="closeModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  DB
+// ══════════════════════════════════════
+const DB_NAME    = "LaundryDB";
+const DB_VERSION = 3;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("receiptsStore"))
+        db.createObjectStore("receiptsStore", { keyPath: "id" });
+      if (!db.objectStoreNames.contains("itemsStore"))
+        db.createObjectStore("itemsStore", { keyPath: "type" });
+      // جدول الديون الجزئية (المدفوعات التي تمت على وصل)
+      if (!db.objectStoreNames.contains("debtPayments"))
+        db.createObjectStore("debtPayments", { keyPath: "receiptId" });
+    };
+
+    req.onsuccess  = () => resolve(req.result);
+    req.onerror    = () => reject(req.error);
+  });
+}
+
+async function getAllReceipts(db) {
+  return new Promise((resolve) => {
+    const req = db.transaction("receiptsStore","readonly")
+                  .objectStore("receiptsStore").getAll();
+    req.onsuccess = () => resolve(req.result || []);
+  });
+}
+
+async function getAllPayments(db) {
+  return new Promise((resolve) => {
+    const req = db.transaction("debtPayments","readonly")
+                  .objectStore("debtPayments").getAll();
+    req.onsuccess = () => resolve(req.result || []);
+  });
+}
+
+async function savePayment(db, record) {
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction("debtPayments","readwrite");
+    tx.objectStore("debtPayments").put(record);
+    tx.oncomplete = resolve;
+    tx.onerror    = reject;
+  });
+}
+
+async function markReceiptPaid(db, receiptId) {
+  return new Promise((resolve, reject) => {
+    const tx    = db.transaction("receiptsStore","readwrite");
+    const store = tx.objectStore("receiptsStore");
+    const get   = store.get(receiptId);
+    get.onsuccess = () => {
+      const rec = get.result;
+      if (rec) { rec.paid = true; store.put(rec); }
+    };
+    tx.oncomplete = resolve;
+    tx.onerror    = reject;
+  });
+}
+
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let _db, _receipts, _payments;
+let _modalReceiptId = null;   // الوصل الذي نحن بصدد دفع جزئي له
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+window.onload = async () => {
+  _db       = await openDB();
+  _receipts = await getAllReceipts(_db);
+  _payments = await getAllPayments(_db);
+
+  renderStats();
+  renderDebts();
+};
+
+// ══════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-" + name).classList.add("active");
+  btn.classList.add("active");
+}
+
+// ══════════════════════════════════════
+//  STATS TAB
+// ══════════════════════════════════════
+function renderStats() {
+  const receipts = _receipts;
+
+  const totalAll    = receipts.reduce((s,r) => s + (parseFloat(r.total)||0), 0);
+  const fastCount   = receipts.filter(r => r.fast).length;
+  const paidCount   = receipts.filter(r => r.paid).length;
+  const unpaidTotal = receipts.filter(r => !r.paid)
+                              .reduce((s,r) => s + (parseFloat(r.total)||0), 0);
+
+  document.getElementById("s-totalAll").textContent = totalAll.toFixed(0);
+  document.getElementById("s-count").textContent    = receipts.length;
+  document.getElementById("s-fast").textContent     = fastCount;
+  document.getElementById("s-paid").textContent     = paidCount;
+  
+
+  // ترتيب القطع
+  const counts = {};
+  receipts.forEach(r => {
+    (r.content || "").split("\n").forEach(line => {
+      if (!line.trim()) return;
+      const clean = line.split("----------------->");
+      if (clean.length < 2) return;
+      const parts = clean[0].trim().split(" ");
+      const qty   = parseFloat(parts[0]);
+      const name  = parts.slice(1).join(" ").trim();
+      if (!isNaN(qty) && name) counts[name] = (counts[name]||0) + qty;
+    });
+  });
+
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 10);
+  const max    = sorted[0]?.[1] || 1;
+  const ranks  = ["gold","silver","bronze"];
+  const el     = document.getElementById("items-ranking");
+
+  if (sorted.length === 0) {
+    el.innerHTML = '<p class="empty">لا توجد بيانات بعد.</p>';
+    return;
+  }
+
+  el.innerHTML = sorted.map(([name, count], i) => `
+    <div class="item-row">
+      <div class="item-rank ${ranks[i]||''}">${i+1}</div>
+      <div class="item-name">${name}</div>
+      <div class="item-bar-wrap">
+        <div class="item-bar" style="width:${(count/max*100).toFixed(0)}%"></div>
+      </div>
+      <div class="item-count">${count}</div>
+    </div>
+  `).join("");
+}
+
+// ══════════════════════════════════════
+//  DEBTS TAB
+// ══════════════════════════════════════
+function getRemaining(receipt) {
+  const orig    = parseFloat(receipt.total) || 0;
+  const payment = _payments.find(p => p.receiptId === receipt.id);
+  const paid    = payment ? (parseFloat(payment.amountPaid)||0) : 0;
+  return Math.max(0, orig - paid);
+}
+
+function renderDebts() {
+  // وصولات غير مدفوعة (paid===false) أو بها دين متبقي
+  const unpaid = _receipts.filter(r => !r.paid || getRemaining(r) > 0);
+
+  // تجميع حسب العميل
+  const map = {};
+  unpaid.forEach(r => {
+    const key = ((r.name||"").trim() + "||" + (r.number||"").trim());
+    if (!map[key]) map[key] = { name: r.name||"—", number: r.number||"—", receipts: [] };
+    map[key].receipts.push(r);
+  });
+
+  // تصفية البحث
+  const q = (document.getElementById("debtSearch")?.value || "").trim().toLowerCase();
+  let groups = Object.values(map);
+  if (q) {
+    groups = groups.filter(g =>
+      g.name.toLowerCase().includes(q) || g.number.includes(q)
+    );
+  }
+
+  const totalDebt = groups.reduce((s, g) =>
+    s + g.receipts.reduce((ss, r) => ss + getRemaining(r), 0), 0);
+
+  document.getElementById("d-totalDebt").textContent    = totalDebt.toFixed(0) + " د";
+  document.getElementById("d-clients-count").textContent = groups.length + " عميل";
+
+  const container = document.getElementById("debts-container");
+  if (groups.length === 0) {
+    container.innerHTML = q
+      ? '<p class="empty">لا توجد نتائج مطابقة.</p>'
+      : '<p class="empty">🎉 لا توجد ديون!</p>';
+    return;
+  }
+
+  container.innerHTML = "";
+  groups.forEach(group => {
+    const groupDebt = group.receipts.reduce((s,r) => s + getRemaining(r), 0);
+    const groupOrig = group.receipts.reduce((s,r) => s + (parseFloat(r.total)||0), 0);
+    const paidPct   = groupOrig > 0 ? ((groupOrig - groupDebt)/groupOrig*100).toFixed(0) : 0;
+    const initial   = group.name !== "—" ? group.name[0] : "؟";
+
+    const card = document.createElement("div");
+    card.className = "client-debt-card";
+    card.innerHTML = `
+      <div class="cdc-header" onclick="toggleDebtCard(this)">
+        <div class="cdc-avatar">${initial}</div>
+        <div class="cdc-info">
+          <div class="cdc-name">${group.name}</div>
+          <div class="cdc-phone">📞 ${group.number}</div>
+        </div>
+        <div class="cdc-debt-badge ${groupDebt===0?'paid-off':''}">
+          ${groupDebt===0 ? "✅ سُدِّد" : groupDebt.toFixed(0)+" د"}
+        </div>
+        <div class="cdc-chevron">▾</div>
+      </div>
+      <div class="cdc-body">
+        ${group.receipts.map(r => buildDebtReceiptHTML(r)).join("")}
+        <div class="debt-progress-wrap">
+          <div class="debt-progress-label">
+            <span>المدفوع</span>
+            <span>${paidPct}%</span>
+          </div>
+          <div class="debt-progress-bar">
+            <div class="debt-progress-fill" style="width:${paidPct}%"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function buildDebtReceiptHTML(r) {
+  const orig      = parseFloat(r.total) || 0;
+  const remaining = getRemaining(r);
+  const payment   = _payments.find(p => p.receiptId === r.id);
+  const paidSoFar = payment ? payment.amountPaid : 0;
+
+  if (remaining === 0) return ""; // مسدَّد بالكامل — لا نعرضه
+
+  return `
+    <div class="debt-receipt ${paidSoFar > 0 ? 'partially-paid' : ''}">
+      🧾 <strong>وصل ${r.id}</strong> — 📅 ${r.date||"—"}<br>
+      الأصل: <strong>${orig} د</strong>
+      ${paidSoFar > 0 ? `&nbsp;|&nbsp; دُفع: <strong style="color:var(--green)">${paidSoFar} د</strong>` : ""}
+      &nbsp;|&nbsp; المتبقي: <strong style="color:var(--red)">${remaining} د</strong>
+      <div class="pay-actions">
+        <button class="pay-btn full"  onclick="payFull('${r.id}')">✅ دفع الكل</button>
+        <button class="pay-btn part"  onclick="openPartial('${r.id}')">💳 دفع جزئي</button>
+      </div>
+    </div>
+  `;
+}
+
+function toggleDebtCard(header) {
+  header.parentElement.classList.toggle("open");
+}
+
+// ══════════════════════════════════════
+//  PAYMENT ACTIONS
+// ══════════════════════════════════════
+async function payFull(receiptId) {
+  if (!confirm("تأكيد دفع المبلغ كاملاً؟")) return;
+
+  const receipt   = _receipts.find(r => r.id === receiptId);
+  const orig      = parseFloat(receipt?.total) || 0;
+
+  // احفظ في debtPayments
+  await savePayment(_db, { receiptId, amountPaid: orig });
+
+  // حدّث الوصل نفسه كـ مدفوع
+  await markReceiptPaid(_db, receiptId);
+
+  // حدّث الذاكرة المحلية
+  const idx = _receipts.findIndex(r => r.id === receiptId);
+  if (idx > -1) _receipts[idx].paid = true;
+  const pidx = _payments.findIndex(p => p.receiptId === receiptId);
+  if (pidx > -1) _payments[pidx] = { receiptId, amountPaid: orig };
+  else _payments.push({ receiptId, amountPaid: orig });
+
+  showToast("✅ تم تسجيل الدفع الكامل");
+  renderDebts();
+  renderStats();
+}
+
+function openPartial(receiptId) {
+  _modalReceiptId = receiptId;
+  document.getElementById("modal-input").value = "";
+  document.getElementById("modal-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("modal-input").focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("open");
+  _modalReceiptId = null;
+}
+
+async function confirmPartial() {
+  const amount = parseFloat(document.getElementById("modal-input").value);
+  if (isNaN(amount) || amount <= 0) { alert("أدخل مبلغاً صحيحاً."); return; }
+
+  const receipt  = _receipts.find(r => r.id === _modalReceiptId);
+  const orig     = parseFloat(receipt?.total) || 0;
+  const existing = _payments.find(p => p.receiptId === _modalReceiptId);
+  const alreadyPaid = existing ? existing.amountPaid : 0;
+  const newTotal    = Math.min(orig, alreadyPaid + amount);
+
+  await savePayment(_db, { receiptId: _modalReceiptId, amountPaid: newTotal });
+
+  // إذا وصل للكامل → علّم الوصل مدفوع
+  if (newTotal >= orig) {
+    await markReceiptPaid(_db, _modalReceiptId);
+    const idx = _receipts.findIndex(r => r.id === _modalReceiptId);
+    if (idx > -1) _receipts[idx].paid = true;
+  }
+
+  const pidx = _payments.findIndex(p => p.receiptId === _modalReceiptId);
+  if (pidx > -1) _payments[pidx].amountPaid = newTotal;
+  else _payments.push({ receiptId: _modalReceiptId, amountPaid: newTotal });
+
+  closeModal();
+  showToast(`💳 تم تسجيل دفع ${amount} درهم`);
+  renderDebts();
+}
+
+// ══════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2800);
+}
+</script>
+</body>
+</html>

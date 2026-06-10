@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>جميع القطع</title>
+
+<style>
+body {
+  font-family: Tahoma, Arial, sans-serif;
+  background: #f0f2f5;
+  margin: 20px;
+  direction: rtl;
+}
+
+h2 {
+  margin-top: 30px;
+  color: #2c3e50;
+  border-right: 5px solid #3498db;
+  padding-right: 10px;
+}
+
+.table-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+table {
+  flex: 1;
+  min-width: 280px;
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: 0 4px 8px rgba(0,0,0,.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+thead {
+  background: linear-gradient(90deg,#3498db,#2980b9);
+  color: white;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+button {
+  cursor: pointer;
+}
+
+#edit-btn {
+  background:#1e90ff;
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:6px;
+}
+
+/* نافذة الإضافة */
+#addItemModal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  z-index:999;
+}
+
+#addItemModal .box {
+  background:white;
+  max-width:400px;
+  margin:10% auto;
+  padding:20px;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<button id="edit-btn" onclick="indes()">الصفحة الرئيسية</button>
+
+<div class="table-container">
+
+  <div>
+    <h2>التحداد</h2>
+    <table>
+      <thead><tr><th>ID</th><th>القطعة</th><th>الثمن</th><th>حذف</th></tr></thead>
+      <tbody id="tableM"></tbody>
+    </table>
+  </div>
+
+  <div>
+    <h2>التصبين + التحداد</h2>
+    <table>
+      <thead><tr><th>ID</th><th>القطعة</th><th>الثمن</th><th>حذف</th></tr></thead>
+      <tbody id="tableS"></tbody>
+    </table>
+  </div>
+
+  <div>
+    <h2>الصباغة</h2>
+    <table>
+      <thead><tr><th>ID</th><th>القطعة</th><th>الثمن</th><th>حذف</th></tr></thead>
+      <tbody id="tableSB"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- نافذة إضافة قطعة -->
+<div id="addItemModal">
+  <div class="box">
+    <h3 style="text-align:center">➕ إضافة قطعة</h3>
+
+    <input id="newName" placeholder="اسم القطعة" style="width:100%;padding:8px"><br><br>
+    <input id="newPrice" type="number" step="0.5" placeholder="الثمن" style="width:100%;padding:8px"><br><br>
+
+    <label><input type="radio" name="type" value="m"> التحداد</label><br>
+    <label><input type="radio" name="type" value="s"> التصبين + التحداد</label><br>
+    <label><input type="radio" name="type" value="sb"> الصباغة</label><br><br>
+
+    <div style="text-align:center">
+      <button onclick="confirmAdd()" style="background:#2ed573;color:white;border:none;padding:8px 16px;border-radius:6px">حفظ</button>
+      <button onclick="closeModal()" style="padding:8px 16px">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script src="items.js"></script>
+
+<script>
+// ======================= تحميل البيانات =======================
+window.onload = loadAndRenderItems;
+
+async function loadAndRenderItems() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction("itemsStore","readonly");
+    const store = tx.objectStore("itemsStore");
+
+    store.get("m").onsuccess = e => { if(e.target.result) TikitM = e.target.result.data; renderTable("tableM",TikitM); };
+    store.get("s").onsuccess = e => { if(e.target.result) TikitS = e.target.result.data; renderTable("tableS",TikitS); };
+    store.get("sb").onsuccess = e => { if(e.target.result) TikitSB = e.target.result.data; renderTable("tableSB",TikitSB); };
+
+  } catch {
+    renderTable("tableM",TikitM);
+    renderTable("tableS",TikitS);
+    renderTable("tableSB",TikitSB);
+  }
+}
+
+// ======================= رسم الجدول =======================
+function renderTable(id, list) {
+  const tbody = document.getElementById(id);
+  tbody.innerHTML = "";
+
+  list.forEach((item,i)=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${item.id}</td>
+        <td>${item.name} ${item.byMeter?"(متر)":""}</td>
+        <td>
+          <input type="number" value="${item.pric}" style="width:70px"
+          onchange="listPrice('${id}',${i},this.value)">
+        </td>
+        <td><button onclick="deleteItem('${id}',${i})" style="background:#ff4757;color:white;border:none;border-radius:4px">حذف</button></td>
+      </tr>
+    `;
+  });
+}
+
+function listPrice(id,i,val){
+  const list = id=="tableM"?TikitM:id=="tableS"?TikitS:TikitSB;
+  list[i].pric = parseFloat(val);
+}
+
+// ======================= حذف =======================
+function deleteItem(id,i){
+  if(!confirm("حذف القطعة؟")) return;
+  const list = id=="tableM"?TikitM:id=="tableS"?TikitS:TikitSB;
+  list.splice(i,1);
+  renderTable(id,list);
+}
+
+// ======================= نافذة الإضافة =======================
+function openModal(){ document.getElementById("addItemModal").style.display="block"; }
+function closeModal(){ document.getElementById("addItemModal").style.display="none"; }
+
+function confirmAdd(){
+  const name = newName.value.trim();
+  const price = parseFloat(newPrice.value);
+  const type = document.querySelector("input[name=type]:checked")?.value;
+
+  if(!name || isNaN(price) || !type){ alert("عمر جميع الخانات"); return; }
+
+  const item = { id:Date.now(), name, pric:price };
+  if(type==="s" && confirm("تحسب بالمتر؟")) item.byMeter=true;
+
+  const list = type=="m"?TikitM:type=="s"?TikitS:TikitSB;
+  list.push(item);
+  renderTable("table"+type.toUpperCase(),list);
+
+  newName.value=""; newPrice.value="";
+  document.querySelectorAll("input[name=type]").forEach(r=>r.checked=false);
+  closeModal();
+}
+
+// ======================= حفظ =======================
+async function saveItemsToDB(){
+  const db = await openDB();
+  const tx = db.transaction("itemsStore","readwrite");
+  const store = tx.objectStore("itemsStore");
+  store.put({type:"m",data:TikitM});
+  store.put({type:"s",data:TikitS});
+  store.put({type:"sb",data:TikitSB});
+  tx.oncomplete = ()=>alert("تم الحفظ");
+}
+
+function indes(){ location.href="index.html"; }
+
+// زر التحكم
+const controls=document.createElement("div");
+controls.style="text-align:center;margin-top:20px";
+controls.innerHTML=`
+<button onclick="openModal()" style="background:#2ed573;color:white;border:none;padding:10px 20px;border-radius:8px">➕ إضافة قطعة</button>
+<button onclick="saveItemsToDB()" style="background:#1e90ff;color:white;border:none;padding:10px 20px;border-radius:8px">💾 حفظ</button>
+`;
+document.body.appendChild(controls);
+</script>
+
+</body>
+</html>

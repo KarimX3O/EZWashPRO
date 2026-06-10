@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>الوصولات غير المدفوعة</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f4f7f6;
+      margin: 0;
+      padding: 0;
+      direction: rtl;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px;
+      background: #f39c12; /* لون برتقالي للتنبيه */
+      color: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+    }
+
+    header h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .nav-buttons {
+      text-align: center;
+      padding: 15px;
+    }
+
+    .nav-buttons button {
+      padding: 8px 20px;
+      background: #34495e;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    ul#unpaidReceipts {
+      list-style: none;
+      padding: 20px;
+      margin: 0 auto;
+      max-width: 600px;
+    }
+
+    ul#unpaidReceipts li {
+      background: white;
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-right: 5px solid #e74c3c; /* خط أحمر للديون */
+    }
+
+    .receipt-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      color: #333;
+    }
+
+    .receipt-id { font-weight: bold; color: #3498db; }
+    .receipt-total { font-weight: bold; color: #e74c3c; }
+    .status-badge {
+      background: #fee;
+      color: #e74c3c;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>💸 وصولات لم تُدفع بعد</h2>
+  </header>
+
+  <div class="nav-buttons">
+    <button onclick="window.location.href='index.html'">الرئيسية</button>
+  </div>
+
+  <ul id="unpaidReceipts"></ul>
+
+  <script src="script.js"></script>
+
+  <script>
+    async function loadUnpaidReceipts() {
+      try {
+        const db = await openDB();
+        const tx = db.transaction("receiptsStore", "readonly");
+        const store = tx.objectStore("receiptsStore");
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+          const allReceipts = request.result;
+          // تصفية الوصولات غير المدفوعة فقط (paid === false)
+          const unpaidList = allReceipts.filter(r => r.paid === false);
+          displayReceipts(unpaidList.reverse()); // ترتيب من الأحدث
+        };
+      } catch (err) {
+        console.error("خطأ في جلب البيانات:", err);
+      }
+    }
+
+    function displayReceipts(list) {
+      const ul = document.getElementById("unpaidReceipts");
+      ul.innerHTML = "";
+
+      if (list.length === 0) {
+        ul.innerHTML = "<p style='text-align:center; color: #7f8c8d;'>✅ لا توجد أي ديون حالياً.</p>";
+        return;
+      }
+
+      list.forEach(r => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <div class="receipt-info">
+            <span><strong>👤</strong> ${r.name || 'بدون اسم'}</span>
+            <span class="receipt-id">🧾 رقم: ${r.id}</span>
+            <span>📅 ${r.date}</span>
+            <span class="receipt-total">💰 المجموع: ${r.total} درهم</span>
+          </div>
+          <div>
+            <span class="status-badge">غير مدفوع</span>
+            ${r.fast ? "<br><small style='color:red'></small>" : ""}
+          </div>
+        `;
+        ul.appendChild(li);
+      });
+    }
+
+    // تشغيل الجلب عند تحميل الصفحة
+    window.onload = loadUnpaidReceipts;
+  </script>
+</body>
+</html>

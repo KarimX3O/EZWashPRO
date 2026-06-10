@@ -1,0 +1,376 @@
+/* ================= ROOT COLORS ================= */
+:root {
+  --primary: #2563eb;
+  --secondary: #0ea5e9;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --dark: #111827;
+  --light: #f9fafb;
+  --gray: #e5e7eb;
+}
+
+/* ================= BASE ================= */
+html, body {
+  font-family: Arial, sans-serif;
+  min-height: 100%;
+  background: #f2f2f2;
+  margin: 0;
+  padding: 0;
+  direction: rtl;
+}
+
+/* ================= TOP BAR ================= */
+#hiding {
+  height: 70px;
+  border-radius: 20px;
+  padding: 6px 12px;
+  gap: 20px;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  margin: 10px;
+}
+
+/* ================= RECEIPT ID ================= */
+#ido {
+  padding: 6px 10px;
+  border-radius: 10px;
+  background-color: var(--primary);
+  color: white;
+  font-weight: bold;
+}
+
+/* ================= MAIN CONTAINER ================= */
+.container {
+  background: #fff;
+  padding: 15px;
+  margin: 10px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+/* ================= PANELS ================= */
+#aljoz1 {
+  width: 70%;
+  padding: 6px;
+}
+
+#aljoz2 {
+  width: 30%;
+  padding: 6px;
+}
+
+/* ================= CLIENT INPUT ================= */
+#clin {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ================= INPUT ================= */
+input {
+  width: 48%;
+  font-size: 16px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+/* ================= TEXTAREA ================= */
+textarea {
+  width: 100%;
+  height: 200px;
+  font-size: 16px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  resize: none;
+  text-align: right;
+}
+
+/* ================= TABS ================= */
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+  gap: 8px;
+}
+
+.tab {
+  padding: 8px 20px;
+  background-color: #ddd;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.tab.active {
+  background-color: var(--primary);
+  color: white;
+}
+
+/* ================= ITEMS GRID ================= */
+.items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* ================= ITEM CARD ================= */
+.item {
+  background: var(--light);
+  border-radius: 14px;
+  padding: 12px 8px;
+  text-align: center;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: 0.25s;
+  border: 1px solid var(--gray);
+}
+
+.item:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-3px);
+}
+
+.item-name {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.item-price {
+  color: var(--success);
+  margin-top: 5px;
+  font-weight: bold;
+}
+
+/* ================= NUMBERS & ACTIONS ================= */
+.numbers,
+.actions {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.numbers {
+  grid-template-columns: repeat(9, 1fr);
+}
+
+.actions {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* ================= BUTTONS ================= */
+button {
+  padding: 10px;
+  font-size: 15px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+button:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.clear {
+  background: linear-gradient(135deg, var(--danger), #b91c1c);
+}
+
+.print {
+  background: linear-gradient(135deg, var(--success), #16a34a);
+}
+
+/* ================= NUMBERS SMALL ================= */
+.numbers button {
+  height: 38px;
+  font-size: 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--dark), #374151);
+  color: white;
+}
+
+/* ================= SELECTED ================= */
+.selected {
+  background-color: var(--success) !important;
+}
+
+/* ================= INFO ROW ================= */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* ================= TOTAL ================= */
+.total {
+  text-align: right;
+  font-weight: bold;
+  margin-top: 10px;
+  font-size: 18px;
+  color: var(--primary);
+}
+
+/* ================= OPTIONS — NEW PRO STYLE ================= */
+.options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin: 20px 0;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+}
+
+.options label {
+  font-size: 15px;
+  font-weight: bold;
+  color: #1f2933;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: 0.25s;
+}
+
+.options label:hover {
+  color: var(--primary);
+  transform: scale(1.05);
+}
+
+/* ✅ Checkbox احترافي (toggle) */
+.options input[type="checkbox"] {
+  appearance: none;
+  width: 42px;
+  height: 22px;
+  background: #cbd5e1;
+  border-radius: 20px;
+  position: relative;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.options input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  top: 3px;
+  right: 3px;
+  transition: 0.3s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+.options input[type="checkbox"]:checked {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+.options input[type="checkbox"]:checked::before {
+  transform: translateX(-20px);
+}
+
+
+/* ================= TOP BUTTON ================= */
+#click-btn {
+  padding: 10px 14px;
+  font-size: 15px;
+  background-color: lightgrey;
+  border: 2px solid #00acc1;
+  color: black;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* ================= IMAGES ================= */
+img {
+  width: 20px;
+  height: 20px;
+}
+
+/* ================================================= */
+/* ================ RESPONSIVE SYSTEM =============== */
+/* ================================================= */
+
+/* ✅ الهواتف */
+@media (max-width: 600px) {
+  .container {
+    flex-direction: column; /* ✅ aljoz1 فوق aljoz2 */
+  }
+
+  #aljoz1,
+  #aljoz2 {
+    width: 100%;
+  }
+
+  textarea {
+    height: 150px !important;
+  }
+
+  .numbers {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .items {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #hiding {
+    flex-direction: column;
+    height: auto;
+  }
+}
+
+/* ✅ التابلت */
+@media (min-width: 601px) and (max-width: 992px) {
+  .container {
+    flex-direction: column;
+  }
+
+  #aljoz1,
+  #aljoz2 {
+    width: 100%;
+  }
+
+  .numbers {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .items {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ✅ الكمبيوتر */
+@media (min-width: 993px) {
+  .container {
+    flex-direction: row;
+  }
+
+  #aljoz1 {
+    width: 70%;
+  }
+
+  #aljoz2 {
+    width: 30%;
+  }
+}

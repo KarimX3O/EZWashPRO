@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قائمة الوصولات</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f0f4f8;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    /* ─── شريط العنوان ─── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .topbar h2 {
+      font-size: 20px;
+      color: #1a1a2e;
+    }
+
+    .back-btn {
+      text-decoration: none;
+      color: #1a1a2e;
+      border: 2px solid #1a1a2e;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .back-btn:hover { background: #1a1a2e; color: white; }
+
+    /* ─── أزرار التصفية ─── */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover { border-color: #1a1a2e; }
+    .filter-btn.active { background: #1a1a2e; color: white; border-color: #1a1a2e; }
+
+    /* ─── البحث ─── */
+    #searchInput {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 15px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: white;
+    }
+    #searchInput:focus { border-color: #1a1a2e; }
+
+    /* ─── إحصائيات سريعة ─── */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      flex: 1;
+      min-width: 130px;
+      background: white;
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .stat-card .num { font-size: 22px; font-weight: bold; color: #1a1a2e; }
+    .stat-card .lbl { font-size: 12px; color: #888; margin-top: 4px; }
+
+    /* ─── بطاقة العميل ─── */
+    .client-card {
+      background: white;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .client-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.12); }
+
+    .client-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      gap: 10px;
+    }
+
+    .client-info { display: flex; align-items: center; gap: 12px; flex: 1; }
+
+    .avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a1a2e, #3a3a6e);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .client-name { font-size: 16px; font-weight: bold; color: #1a1a2e; }
+    .client-phone { font-size: 13px; color: #888; margin-top: 2px; }
+
+    .client-badges {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .badge-count { background: #e8f0fe; color: #1a1a2e; }
+    .badge-total { background: #e6f9f0; color: #1a7a4a; }
+
+    .chevron {
+      font-size: 18px;
+      color: #aaa;
+      transition: transform 0.3s;
+      flex-shrink: 0;
+    }
+    .client-card.open .chevron { transform: rotate(180deg); }
+
+    /* ─── وصولات العميل ─── */
+    .client-receipts {
+      display: none;
+      border-top: 1px solid #f0f0f0;
+      padding: 0 14px 14px;
+    }
+    .client-card.open .client-receipts { display: block; }
+
+    .receipt-item {
+      background: #f8f9fb;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      position: relative;
+      line-height: 1.9;
+      font-size: 14px;
+    }
+
+    .receipt-item pre {
+      background: #efefef;
+      padding: 8px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin-top: 6px;
+      white-space: pre-wrap;
+    }
+
+    .receipt-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .tag {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .tag-fast { background: #fff3cd; color: #856404; }
+    .tag-paid { background: #d1f2eb; color: #1a7a4a; }
+    .tag-unpaid { background: #fde8e8; color: #c0392b; }
+
+    .delete-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .delete-btn:hover { background: #c0392b; }
+
+    /* ─── رسالة فارغ ─── */
+    .empty-msg {
+      text-align: center;
+      color: #aaa;
+      padding: 40px;
+      font-size: 16px;
+    }
+
+    /* ─── مجموع البحث ─── */
+    .search-total {
+      background: #e6f9f0;
+      color: #1a7a4a;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    /* ─── شريط النسخ الاحتياطي ─── */
+    .backup-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .backup-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .backup-btn:hover { opacity: 0.85; }
+    .backup-btn.export { background: #1a1a2e; color: white; }
+    .backup-btn.import { background: #e8f0fe; color: #1a1a2e; }
+
+    /* ─── بانر التحذير ─── */
+    .backup-alert {
+      display: none;
+      background: #fff3cd;
+      border: 2px solid #f0ad4e;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .backup-alert.show { display: block; }
+    .backup-alert strong { color: #856404; }
+    .backup-alert-btns { display: flex; gap: 8px; margin-top: 10px; }
+    .backup-alert-btns button {
+      padding: 7px 14px;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .ba-now  { background: #856404; color: white; }
+    .ba-later { background: #f0f0f0; color: #555; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back-btn" href="index.html">→ رجوع</a>
+    <h2>📜 الوصولات</h2>
+  </div>
+
+
+  <!-- بانر تحذير النسخ الاحتياطي -->
+  <div class="backup-alert" id="backupAlert">
+    ⚠️ <strong>تذكير:</strong> مضى وقت طويل على آخر نسخة احتياطية!<br>
+    يُنصح بتصدير بياناتك الآن لتجنب أي ضياع.
+    <div class="backup-alert-btns">
+      <button class="ba-now" onclick="exportBackup()">💾 نسخ احتياطي الآن</button>
+      <button class="ba-later" onclick="dismissAlert()">لاحقاً</button>
+    </div>
+  </div>
+
+  <!-- أزرار التصدير والاستيراد -->
+  <div class="backup-bar">
+    <button class="backup-btn export" onclick="exportBackup()">💾 تصدير نسخة احتياطية</button>
+    <button class="backup-btn import" onclick="document.getElementById('importFile').click()">📂 استيراد نسخة احتياطية</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importBackup(event)">
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all', this)">الكل</button>
+    <button class="filter-btn" onclick="setFilter('unpaid', this)">💷 غير مدفوعة</button>
+    <button class="filter-btn" onclick="setFilter('paid', this)">✅ مدفوعة</button>
+  </div>
+
+  <input type="text" id="searchInput" placeholder="🔎 ابحث عن اسم أو رقم هاتف...">
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="num" id="statClients">0</div>
+      <div class="lbl">عدد العملاء</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="statReceipts">0</div>
+      <div class="lbl">إجمالي الوصولات</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="statTotal">0</div>
+      <div class="lbl">المجموع الكلي (درهم)</div>
+    </div>
+  </div>
+
+  <div class="search-total" id="searchTotal"></div>
+  <div id="receiptsContainer"></div>
+
+<script>
+  const dbName = "LaundryDB";
+  const storeName = "receiptsStore";
+
+  let allReceipts = [];
+  let currentFilter = 'all';
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(dbName, 3);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(storeName))
+          db.createObjectStore(storeName, { keyPath: "id" });
+        if (!db.objectStoreNames.contains("itemsStore"))
+          db.createObjectStore("itemsStore", { keyPath: "type" });
+        if (!db.objectStoreNames.contains("debtPayments"))
+          db.createObjectStore("debtPayments", { keyPath: "receiptId" });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function loadReceipts() {
+    try {
+      const db = await openDB();
+      const tx = db.transaction(storeName, "readonly");
+      const req = tx.objectStore(storeName).getAll();
+      req.onsuccess = () => {
+        allReceipts = req.result;
+        render();
+      };
+    } catch (err) {
+      document.getElementById("receiptsContainer").innerHTML =
+        '<p class="empty-msg">❌ فشل تحميل البيانات.</p>';
+    }
+  }
+
+  // ─── تجميع الوصولات حسب الاسم + الرقم ───
+  function groupReceipts(list) {
+    const map = {};
+    list.forEach(r => {
+      const key = (r.name || '').trim() + '||' + (r.number || '').trim();
+      if (!map[key]) {
+        map[key] = { name: r.name || '---', number: r.number || '---', receipts: [] };
+      }
+      map[key].receipts.push(r);
+    });
+    // ترتيب من الأحدث
+    Object.values(map).forEach(g => g.receipts.sort((a, b) => b.id - a.id));
+    return Object.values(map).sort((a, b) => b.receipts.length - a.receipts.length);
+  }
+
+  function applyFilter(list) {
+    if (currentFilter === 'paid') return list.filter(r => r.paid);
+    if (currentFilter === 'unpaid') return list.filter(r => !r.paid);
+    return list;
+  }
+
+  function applySearch(list, q) {
+    if (!q) return list;
+    q = q.toLowerCase();
+    return list.filter(r =>
+      (r.name && r.name.toLowerCase().includes(q)) ||
+      (r.number && r.number.includes(q))
+    );
+  }
+
+  function render() {
+    const q = document.getElementById("searchInput").value.trim();
+    let filtered = applyFilter(allReceipts);
+    filtered = applySearch(filtered, q);
+
+    const groups = groupReceipts(filtered);
+    const container = document.getElementById("receiptsContainer");
+
+    // إحصائيات
+    const totalSum = filtered.reduce((s, r) => s + (parseFloat(r.total) || 0), 0);
+    document.getElementById("statClients").textContent = groups.length;
+    document.getElementById("statReceipts").textContent = filtered.length;
+    document.getElementById("statTotal").textContent = totalSum.toFixed(0);
+
+    // مجموع البحث
+    const searchTotalEl = document.getElementById("searchTotal");
+    if (q && groups.length > 0) {
+      searchTotalEl.style.display = "block";
+      searchTotalEl.textContent = `💵 مجموع وصولات "${q}": ${totalSum.toFixed(0)} درهم`;
+    } else {
+      searchTotalEl.style.display = "none";
+    }
+
+    if (groups.length === 0) {
+      container.innerHTML = '<p class="empty-msg">لا توجد وصولات مطابقة.</p>';
+      return;
+    }
+
+    container.innerHTML = "";
+    groups.forEach(group => {
+      const groupTotal = group.receipts.reduce((s, r) => s + (parseFloat(r.total) || 0), 0);
+      const initial = (group.name && group.name !== '---') ? group.name[0] : '؟';
+
+      const card = document.createElement("div");
+      card.className = "client-card";
+
+      card.innerHTML = `
+        <div class="client-header" onclick="toggleCard(this)">
+          <div class="client-info">
+            <div class="avatar">${initial}</div>
+            <div>
+              <div class="client-name">${group.name}</div>
+              <div class="client-phone">📞 ${group.number}</div>
+            </div>
+          </div>
+          <div class="client-badges">
+            <span class="badge badge-count">🧾 ${group.receipts.length} وصل</span>
+            <span class="badge badge-total">💰 ${groupTotal.toFixed(0)} د</span>
+          </div>
+          <span class="chevron">▾</span>
+        </div>
+        <div class="client-receipts">
+          ${group.receipts.map(r => `
+            <div class="receipt-item" id="rec-${r.id}">
+              <button class="delete-btn" onclick="deleteReceipt('${r.id}')">🗑️</button>
+              🧾 <strong>رقم:</strong> ${r.id || '---'} &nbsp;|&nbsp;
+              📅 <strong>التاريخ:</strong> ${r.date || '---'}<br>
+              💰 <strong>المجموع:</strong> ${r.total || '0'} درهم
+              <div class="receipt-tags">
+                ${r.fast ? '<span class="tag tag-fast">⚡ تصبين سريع</span>' : ''}
+                ${r.paid ? '<span class="tag tag-paid">✅ مدفوع</span>' : '<span class="tag tag-unpaid">💷 غير مدفوع</span>'}
+              </div>
+              <pre>${r.content || ''}</pre>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
+  function toggleCard(header) {
+    header.parentElement.classList.toggle("open");
+  }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    render();
+  }
+
+  async function deleteReceipt(id) {
+    if (!confirm("هل تريد حذف هذا الوصل؟")) return;
+    try {
+      const db = await openDB();
+      const tx = db.transaction(storeName, "readwrite");
+      tx.objectStore(storeName).delete(id);
+      tx.oncomplete = () => {
+        allReceipts = allReceipts.filter(r => r.id !== id);
+        render();
+      };
+    } catch { alert("تعذر الحذف."); }
+  }
+
+  document.getElementById("searchInput").addEventListener("input", render);
+
+
+  // ══ النسخ الاحتياطي ══
+
+  // للتجربة: 5 دقائق = 300000ms  (للإنتاج غيّرها: شهران = 5184000000)
+  const BACKUP_INTERVAL_MS = 5 * 60 * 1000;
+
+  function checkBackupAlert() {
+    const last = localStorage.getItem('lastBackupDate');
+    if (!last) {
+      // أول استخدام — احفظ التاريخ الحالي ولا تزعج
+      localStorage.setItem('lastBackupDate', Date.now());
+      return;
+    }
+    const diff = Date.now() - parseInt(last);
+    if (diff >= BACKUP_INTERVAL_MS) {
+      document.getElementById("backupAlert").classList.add("show");
+    }
+  }
+
+  function dismissAlert() {
+    document.getElementById("backupAlert").classList.remove("show");
+  }
+
+  async function exportBackup() {
+    try {
+      const db = await openDB();
+
+      const receipts = await new Promise(res => {
+        const req = db.transaction("receiptsStore","readonly")
+                      .objectStore("receiptsStore").getAll();
+        req.onsuccess = () => res(req.result || []);
+      });
+
+      const payments = await new Promise(res => {
+        const req = db.transaction("debtPayments","readonly")
+                      .objectStore("debtPayments").getAll();
+        req.onsuccess = () => res(req.result || []);
+      });
+
+      const backup = {
+        version: 1,
+        exportDate: new Date().toLocaleDateString('ar-MA'),
+        receipts,
+        payments
+      };
+
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `backup-مصبنة-${new Date().toLocaleDateString('ar-MA').replace(/\//g,'-')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      // حفظ تاريخ آخر نسخة احتياطية
+      localStorage.setItem('lastBackupDate', Date.now());
+      dismissAlert();
+      alert("✅ تم تصدير النسخة الاحتياطية بنجاح!");
+
+    } catch(err) {
+      alert("❌ فشل التصدير: " + err.message);
+    }
+  }
+
+  async function importBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!confirm("⚠️ سيتم استبدال البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟")) {
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      const text   = await file.text();
+      const backup = JSON.parse(text);
+
+      if (!backup.receipts) {
+        alert("❌ الملف غير صالح أو تالف.");
+        return;
+      }
+
+      const db = await openDB();
+
+      // استيراد الوصولات
+      await new Promise((res, rej) => {
+        const tx    = db.transaction("receiptsStore","readwrite");
+        const store = tx.objectStore("receiptsStore");
+        store.clear();
+        backup.receipts.forEach(r => store.put(r));
+        tx.oncomplete = res;
+        tx.onerror    = rej;
+      });
+
+      // استيراد المدفوعات
+      if (backup.payments && backup.payments.length > 0) {
+        await new Promise((res, rej) => {
+          const tx    = db.transaction("debtPayments","readwrite");
+          const store = tx.objectStore("debtPayments");
+          store.clear();
+          backup.payments.forEach(p => store.put(p));
+          tx.oncomplete = res;
+          tx.onerror    = rej;
+        });
+      }
+
+      alert(`✅ تم استيراد ${backup.receipts.length} وصل بنجاح!`);
+      event.target.value = "";
+      loadReceipts();
+
+    } catch(err) {
+      alert("❌ فشل الاستيراد: " + err.message);
+    }
+  }
+
+  window.onload = () => { loadReceipts(); checkBackupAlert(); };
+</script>
+</body>
+</html>
