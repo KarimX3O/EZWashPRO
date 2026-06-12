@@ -14,8 +14,8 @@ function openDB() {
         db.createObjectStore("itemsStore", { keyPath: "type" });
       }
       if (!db.objectStoreNames.contains("debtPayments")) {
-  db.createObjectStore("debtPayments", { keyPath: "receiptId" });
-}
+        db.createObjectStore("debtPayments", { keyPath: "receiptId" });
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = (event) => reject(event.target.error);
@@ -25,6 +25,7 @@ function openDB() {
 // --- 2. متغيرات النظام الأساسية ---
 let selectedNumber = null;
 let totalPrice = 0;
+let selectedPickupDate = null; // ← موعد الاستلام
 
 // المصفوفات الافتراضية
 let TikitM = [
@@ -66,7 +67,7 @@ const dateString = today.toLocaleDateString('ar-MA');
 const dateElement = document.getElementById("todayDate");
 if (dateElement) dateElement.textContent = dateString;
 
-// --- 4. دالات العرض والتحكم (UI Functions) ---
+// --- 4. دالات العرض والتحكم ---
 function selectNumber(num) {
   selectedNumber = num;
   document.querySelectorAll('.numbers button').forEach(btn => btn.classList.remove('selected'));
@@ -81,7 +82,7 @@ function createItemHTML(item) {
 
 function renderItems(list) {
   const container = document.getElementById("itemsContainer");
-  if (!container) return; // لضمان عدم حدوث خطأ في صفحات أخرى
+  if (!container) return;
   container.innerHTML = "";
   list.forEach(item => {
     const div = document.createElement("div");
@@ -93,12 +94,9 @@ function renderItems(list) {
 }
 
 function showCategory(cat) {
-  // تحديث القائمة
   if (cat === 'm') currentList = TikitM;
   else if (cat === 's') currentList = TikitS;
   else if (cat === 'sb') currentList = TikitSB;
-
-  // تحديث شكل الأزرار (فقط إذا كانت موجودة)
   const tabs = document.querySelectorAll(".tab");
   if (tabs.length > 0) {
     tabs.forEach(tab => tab.classList.remove("active"));
@@ -106,11 +104,10 @@ function showCategory(cat) {
     else if (cat === 's') tabs[1].classList.add("active");
     else if (cat === 'sb') tabs[2].classList.add("active");
   }
-
   renderItems(currentList);
 }
 
-// --- 5. دالات العمليات (Logic Functions) ---
+// --- 5. دالات العمليات ---
 function addClothingByMeter(item, price) {
   let meters = parseFloat(prompt(`أدخل عدد الأمتار ل: ${item}`));
   if (isNaN(meters) || meters <= 0) {
@@ -133,7 +130,6 @@ function updateBill(item, price, amount, isMeter) {
   let lines = output.value.trim().split("\n").filter(l => l !== "");
   let updated = false;
   const unit = isMeter ? "متر " : "";
-
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].includes(item)) {
       let parts = lines[i].split(" ");
@@ -144,11 +140,9 @@ function updateBill(item, price, amount, isMeter) {
       break;
     }
   }
-
   if (!updated) {
     lines.push(`${amount} ${unit}${item} ----------------->${price * amount}`);
   }
-
   output.value = lines.join("\n");
   totalPrice += price * amount;
   const totalElem = document.getElementById("total");
@@ -164,7 +158,15 @@ function clearAll() {
   if (receiptId) receiptId.textContent = "----";
   totalPrice = 0;
   selectedNumber = null;
+  selectedPickupDate = null;
+  const whatsappNum = document.getElementById("whatsappNumber");
+  const clientName = document.getElementById("nameclione");
+  if (whatsappNum) whatsappNum.value = "";
+  if (clientName) clientName.value = "";
   document.querySelectorAll('.numbers button').forEach(btn => btn.classList.remove('selected'));
+  // إخفاء شريط الموعد
+  const banner = document.getElementById("pickupBanner");
+  if (banner) banner.style.display = "none";
 }
 
 // --- 6. الإرسال والأرشفة ---
@@ -172,15 +174,12 @@ async function sendToWhatsapp() {
   const outputElem = document.getElementById("output");
   const numElem = document.getElementById("whatsappNumber");
   const nameElem = document.getElementById("nameclione");
-  
   if (!outputElem || !numElem) return;
-  
   const output = outputElem.value;
   const number = numElem.value.trim();
   const name = nameElem ? nameElem.value.trim() : "";
   const isFast = document.getElementById("fastWash")?.checked || false;
   const isPaid = document.getElementById("paid")?.checked || false;
-
   if (!number || !output) {
     alert("المرجو إدخال رقم واتساب واختيار الملابس أولاً.");
     return;
@@ -192,10 +191,12 @@ async function sendToWhatsapp() {
   if (ridElem) ridElem.textContent = formattedId;
   localStorage.setItem('lastReceiptId', lastId);
 
+  // ← نضيف pickupDate للسجل
   const receiptRecord = {
     id: formattedId, date: dateString, name: name,
     number: number, content: output, total: totalPrice,
-    fast: isFast, paid: isPaid
+    fast: isFast, paid: isPaid,
+    pickupDate: selectedPickupDate || null
   };
 
   try {
@@ -204,46 +205,102 @@ async function sendToWhatsapp() {
     tx.objectStore(storeName).put(receiptRecord);
   } catch (err) { console.error("❌ فشل الحفظ:", err); }
 
-  let receiptContent = `السلام عليكم مصبنة البحر ترحب بيكم 👋\nوصل رقم: ${formattedId}\nالتاريخ: ${dateString}\nالاسم: ${name}\n\n${output}\n---------------------\n💰 المجموع: ${totalPrice} درهم\n${isPaid ? "✅ تم الدفع" : ""}\nشكرا على ثقتكم 🙏`;
+  // ← نضيف الموعد لرسالة الواتساب إذا كان موجوداً
+  let pickupLine = "";
+  if (selectedPickupDate) {
+    const d = new Date(selectedPickupDate);
+    const formatted = d.toLocaleDateString('ar-MA', { weekday: 'long', day: 'numeric', month: 'long' });
+    pickupLine = `\n📅 موعد الاستلام: ${formatted}`;
+  }
+
+  let receiptContent = `السلام عليكم مصبنة البحر ترحب بيكم 👋\nوصل رقم: ${formattedId}\nالتاريخ: ${dateString}\nالاسم: ${name}\n\n${output}\n---------------------\n💰 المجموع: ${totalPrice} درهم${pickupLine}\n${isPaid ? "✅ تم الدفع" : ""}\nشكرا على ثقتكم 🙏`;
   let phone = number.startsWith("0") ? "212" + number.substring(1) : (number.startsWith("212") ? number : "212" + number);
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(receiptContent)}`, '_blank');
   clearAll();
 }
 
-// --- 7. دالات التنقل ---
+// --- 7. الموعد: فتح وإغلاق وتأكيد ---
+function openPickupModal() {
+  const output = document.getElementById('output');
+  if (!output || !output.value.trim()) {
+    alert('⚠️ المرجو اختيار الملابس أولاً.');
+    return;
+  }
+  // بناء أزرار الأيام السريعة
+  const container = document.getElementById('quickDaysBtns');
+  container.innerHTML = '';
+  const labels = ['غدًا', 'بعد غد', '3 أيام', '4 أيام', '5 أيام', 'أسبوع'];
+  labels.forEach((lbl, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i + 1);
+    const val = d.toISOString().split('T')[0];
+    const btn = document.createElement('button');
+    btn.className = 'qday-btn';
+    btn.textContent = lbl;
+    btn.onclick = () => {
+      document.querySelectorAll('.qday-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('customDate').value = val;
+    };
+    container.appendChild(btn);
+  });
+  const minDate = new Date().toISOString().split('T')[0];
+  document.getElementById('customDate').min = minDate;
+  if (selectedPickupDate) document.getElementById('customDate').value = selectedPickupDate;
+  document.getElementById('pickupModal').style.display = 'flex';
+}
+
+function closePickupModal() {
+  document.getElementById('pickupModal').style.display = 'none';
+}
+
+function confirmPickup() {
+  const val = document.getElementById('customDate').value;
+  if (!val) { alert('⚠️ اختر تاريخًا.'); return; }
+  selectedPickupDate = val;
+  const d = new Date(val);
+  const formatted = d.toLocaleDateString('ar-MA', { weekday: 'long', day: 'numeric', month: 'long' });
+  document.getElementById('bannerText').textContent = `📅 موعد الاستلام: ${formatted}`;
+  document.getElementById('pickupBanner').style.display = 'flex';
+  closePickupModal();
+}
+
+function clearPickup() {
+  selectedPickupDate = null;
+  document.getElementById('pickupBanner').style.display = 'none';
+}
+
+// --- 8. دالات التنقل ---
 function showReceipts() { window.location.href = 'receipts.html'; }
 function showRecei() { window.location.href = 'items.html'; }
 function stats() { window.location.href = 'stats.html'; }
+function showPickup() { window.location.href = 'pickup.html'; }
 
-// --- 8. دالة جلب الأثمنة من قاعدة البيانات عند التشغيل ---
+// --- 9. دالة جلب الأثمنة من قاعدة البيانات عند التشغيل ---
 async function loadPricesFromDB() {
   try {
     const db = await openDB();
     const tx = db.transaction("itemsStore", "readonly");
     const store = tx.objectStore("itemsStore");
-
     const reqM = store.get("m");
     const reqS = store.get("s");
     const reqSB = store.get("sb");
-
-    reqM.onsuccess = () => { if(reqM.result) TikitM = reqM.result.data; };
-    reqS.onsuccess = () => { if(reqS.result) TikitS = reqS.result.data; };
-    reqSB.onsuccess = () => { 
-      if(reqSB.result) TikitSB = reqSB.result.data;
-      showCategory('m'); 
+    reqM.onsuccess = () => { if (reqM.result) TikitM = reqM.result.data; };
+    reqS.onsuccess = () => { if (reqS.result) TikitS = reqS.result.data; };
+    reqSB.onsuccess = () => {
+      if (reqSB.result) TikitSB = reqSB.result.data;
+      showCategory('m');
     };
-
   } catch (err) {
     console.warn("استخدام الأثمنة الافتراضية:", err);
     showCategory('m');
   }
 }
 
-// --- 9. تشغيل التطبيق النهائي ---
+// --- 10. تشغيل التطبيق ---
 window.addEventListener('load', () => {
   loadPricesFromDB();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
   }
 });
-
