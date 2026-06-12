@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>مواعيد الاستلام</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* ===== Header ===== */
+    .top-bar {
+      background: #1a6b8a;
+      color: white;
+      padding: 14px 16px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    .top-bar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .back-btn {
+      background: rgba(255,255,255,0.18);
+      border: none;
+      color: white;
+      font-family: 'Cairo', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+    .page-title {
+      font-size: 1.05rem;
+      font-weight: 900;
+    }
+    .today-label {
+      font-size: 0.72rem;
+      opacity: 0.75;
+      text-align: center;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    /* ===== Stats ===== */
+    .stats-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+    .stat {
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 6px 14px;
+      text-align: center;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .stat .n { font-size: 1.1rem; font-weight: 900; display: block; }
+    .stat .l { font-size: 0.68rem; opacity: 0.85; }
+
+    /* ===== Filters ===== */
+    .filters {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px 4px;
+      overflow-x: auto;
+    }
+    .f-btn {
+      flex-shrink: 0;
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 2px solid #c8dce6;
+      background: white;
+      color: #4a6578;
+      font-family: 'Cairo', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .f-btn.active {
+      background: #1a6b8a;
+      color: white;
+      border-color: #1a6b8a;
+    }
+
+    /* ===== Section label ===== */
+    .sec-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #4a6578;
+      padding: 14px 16px 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ===== Card ===== */
+    .card {
+      background: white;
+      border-radius: 14px;
+      margin: 0 12px 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .card-left-bar {
+      width: 5px;
+      flex-shrink: 0;
+      align-self: stretch;
+    }
+    .bar-urgent { background: #c0392b; }
+    .bar-today  { background: #e67e22; }
+    .bar-future { background: #27ae60; }
+    .bar-done   { background: #bdc3c7; }
+
+    .card-inner {
+      display: flex;
+    }
+    .card-content {
+      flex: 1;
+      padding: 12px 14px;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .client-name {
+      font-size: 1rem;
+      font-weight: 900;
+      color: #1a2530;
+    }
+    .receipt-num {
+      font-size: 0.7rem;
+      color: #8a9baa;
+      margin-top: 1px;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .badge-urgent { background: #fdecea; color: #c0392b; }
+    .badge-today  { background: #fef3e7; color: #e67e22; }
+    .badge-future { background: #eafaf1; color: #27ae60; }
+    .badge-done   { background: #f2f3f4; color: #7f8c8d; }
+
+    .pickup-date {
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .pickup-date.red    { color: #c0392b; }
+    .pickup-date.orange { color: #e67e22; }
+    .pickup-date.green  { color: #27ae60; }
+    .pickup-date.grey   { color: #95a5a6; }
+
+    /* قائمة الملابس */
+    .clothes-list {
+      background: #f8fafb;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      color: #4a6578;
+      line-height: 1.7;
+      margin-bottom: 8px;
+    }
+
+    .card-footer {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-call {
+      flex: 1;
+      padding: 8px;
+      background: #eaf4f8;
+      color: #1a6b8a;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-ready {
+      flex: 2;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: #1a6b8a;
+      color: white;
+      transition: background 0.2s;
+    }
+    .btn-ready.done {
+      background: #f2f3f4;
+      color: #7f8c8d;
+    }
+
+    /* ===== Empty ===== */
+    .empty {
+      text-align: center;
+      color: #a0b4c0;
+      padding: 60px 20px;
+      font-size: 0.9rem;
+    }
+    .empty .icon { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+
+    /* ===== Toast ===== */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1a2530;
+      color: white;
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: transform 0.3s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <div class="top-bar-row">
+    <button class="back-btn" onclick="history.back()">← رجوع</button>
+    <span class="page-title">📋 الملابس للتجميع</span>
+    <div style="width:60px"></div>
+  </div>
+  <span class="today-label" id="todayLabel"></span>
+  <div class="stats-row" id="statsRow"></div>
+</div>
+
+<!-- Filters -->
+<div class="filters">
+  <button class="f-btn active" onclick="applyFilter('all',this)">الكل</button>
+  <button class="f-btn" onclick="applyFilter('urgent',this)">⚠️ متأخر</button>
+  <button class="f-btn" onclick="applyFilter('today',this)">🔔 اليوم</button>
+  <button class="f-btn" onclick="applyFilter('future',this)">📅 قادم</button>
+  <button class="f-btn" onclick="applyFilter('done',this)">✅ مسلّم</button>
+</div>
+
+<div id="cardsList"></div>
+<div id="toast"></div>
+
+<script>
+  const dbName = "LaundryDB";
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(dbName, 3);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains("receiptsStore"))
+          db.createObjectStore("receiptsStore", { keyPath: "id" });
+        if (!db.objectStoreNames.contains("itemsStore"))
+          db.createObjectStore("itemsStore", { keyPath: "type" });
+        if (!db.objectStoreNames.contains("debtPayments"))
+          db.createObjectStore("debtPayments", { keyPath: "receiptId" });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = e => reject(e.target.error);
+    });
+  }
+
+  async function getAllReceipts() {
+    const db = await openDB();
+    return new Promise(resolve => {
+      const tx = db.transaction("receiptsStore", "readonly");
+      const req = tx.objectStore("receiptsStore").getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => resolve([]);
+    });
+  }
+
+  async function saveReceipt(record) {
+    const db = await openDB();
+    return new Promise(resolve => {
+      const tx = db.transaction("receiptsStore", "readwrite");
+      tx.objectStore("receiptsStore").put(record);
+      tx.oncomplete = resolve;
+    });
+  }
+
+  // ── الأولوية ──
+  const nowDay = new Date(); nowDay.setHours(0,0,0,0);
+
+  function priority(r) {
+    if (r.delivered) return 'done';
+    if (!r.pickupDate) return null; // بدون موعد: لا تظهر
+    const d = new Date(r.pickupDate); d.setHours(0,0,0,0);
+    const diff = Math.round((d - nowDay) / 86400000);
+    if (diff < 0)  return 'urgent';
+    if (diff === 0) return 'today';
+    return 'future';
+  }
+
+  function countdownText(r) {
+    if (!r.pickupDate) return '';
+    const d = new Date(r.pickupDate); d.setHours(0,0,0,0);
+    const diff = Math.round((d - nowDay) / 86400000);
+    if (r.delivered) return 'تم التسليم ✅';
+    if (diff < 0)  return `⚠️ متأخر ${Math.abs(diff)} يوم`;
+    if (diff === 0) return '🔔 اليوم آخر أجل!';
+    if (diff === 1) return '📅 غدًا';
+    return `📅 بعد ${diff} أيام`;
+  }
+
+  function formatDate(str) {
+    if (!str) return '—';
+    return new Date(str).toLocaleDateString('ar-MA', { weekday:'long', day:'numeric', month:'long' });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  let all = [];
+  let currentFilter = 'all';
+
+  function renderStats(records) {
+    const c = { urgent:0, today:0, future:0, done:0 };
+    records.forEach(r => { const p = priority(r); if (p) c[p]++; });
+    document.getElementById('statsRow').innerHTML = `
+      <div class="stat"><span class="n">${c.urgent}</span><span class="l">⚠️ متأخر</span></div>
+      <div class="stat"><span class="n">${c.today}</span><span class="l">🔔 اليوم</span></div>
+      <div class="stat"><span class="n">${c.future}</span><span class="l">📅 قادم</span></div>
+      <div class="stat"><span class="n">${c.done}</span><span class="l">✅ مسلّم</span></div>
+    `;
+  }
+
+  function renderCards(records, filter) {
+    // فقط الوصولات التي لها موعد
+    let list = records.filter(r => r.pickupDate || r.delivered);
+    if (filter !== 'all') list = list.filter(r => priority(r) === filter);
+
+    // ترتيب: متأخر ← اليوم ← قادم (حسب التاريخ) ← مسلّم
+    const order = { urgent:0, today:1, future:2, done:3 };
+    list.sort((a, b) => {
+      const pa = priority(a) || 'done', pb = priority(b) || 'done';
+      if (order[pa] !== order[pb]) return order[pa] - order[pb];
+      if (a.pickupDate && b.pickupDate) return new Date(a.pickupDate) - new Date(b.pickupDate);
+      return 0;
+    });
+
+    const container = document.getElementById('cardsList');
+    if (list.length === 0) {
+      container.innerHTML = `<div class="empty"><span class="icon">📭</span>لا توجد طلبات</div>`;
+      return;
+    }
+
+    const groupTitles = { urgent:'⚠️ متأخرون', today:'🔔 موعدهم اليوم', future:'📅 مواعيد قادمة', done:'✅ تم التسليم' };
+    let html = '';
+    let lastGroup = null;
+
+    list.forEach(r => {
+      const p = priority(r) || 'done';
+      if (p !== lastGroup) {
+        html += `<div class="sec-label">${groupTitles[p]}</div>`;
+        lastGroup = p;
+      }
+
+      const cdText = countdownText(r);
+      const cdClass = p === 'urgent' ? 'red' : p === 'today' ? 'orange' : p === 'future' ? 'green' : 'grey';
+      const badgeMap = { urgent:'badge-urgent', today:'badge-today', future:'badge-future', done:'badge-done' };
+      const badgeTxt = { urgent:'متأخر ⚠️', today:'اليوم 🔔', future:'قادم 📅', done:'مسلّم ✅' };
+      const barCls = `bar-${p}`;
+      const readyTxt = r.delivered ? '↩ تراجع' : '✅ جُمِعت وجاهزة';
+      const readyCls = r.delivered ? 'done' : '';
+
+      // تنسيق الملابس: كل سطر في عنصر منفصل
+      const clothesLines = (r.content || '').split('\n').filter(l => l.trim()).map(l => `<div>${l}</div>`).join('');
+
+      html += `
+      <div class="card">
+        <div class="card-inner">
+          <div class="card-left-bar ${barCls}"></div>
+          <div class="card-content">
+            <div class="card-head">
+              <div>
+                <div class="client-name">${r.name || 'عميل'}</div>
+                <div class="receipt-num">وصل #${r.id}</div>
+              </div>
+              <span class="badge ${badgeMap[p]}">${badgeTxt[p]}</span>
+            </div>
+            <div class="pickup-date ${cdClass}">${cdText} — ${formatDate(r.pickupDate)}</div>
+            <div class="clothes-list">${clothesLines || '—'}</div>
+            <div class="card-footer">
+              <button class="btn-call" onclick="callClient('${r.number || ''}')">📞 اتصال</button>
+              <button class="btn-ready ${readyCls}" onclick="toggleDelivered('${r.id}')">${readyTxt}</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function callClient(num) {
+    if (!num) return showToast('لا يوجد رقم هاتف');
+    let p = num.startsWith('0') ? '212' + num.slice(1) : num;
+    window.open(`tel:+${p}`, '_self');
+  }
+
+  async function toggleDelivered(id) {
+    const r = all.find(x => x.id === id);
+    if (!r) return;
+    r.delivered = !r.delivered;
+    await saveReceipt(r);
+    showToast(r.delivered ? '✅ تم التسليم' : '↩ تم التراجع');
+    renderStats(all);
+    renderCards(all, currentFilter);
+  }
+
+  function applyFilter(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCards(all, filter);
+  }
+
+  async function init() {
+    document.getElementById('todayLabel').textContent =
+      new Date().toLocaleDateString('ar-MA', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    all = await getAllReceipts();
+    renderStats(all);
+    renderCards(all, 'all');
+  }
+
+  init();
+</script>
+</body>
+</html>
+
