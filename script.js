@@ -25,7 +25,8 @@ function openDB() {
 // --- 2. متغيرات النظام الأساسية ---
 let selectedNumber = null;
 let totalPrice = 0;
-let selectedPickupDate = null; // ← موعد الاستلام
+let selectedPickupDate = null;
+let currentCategory = 'm'; // ← إضافة متغير لتتبع القسم الحالي
 
 // المصفوفات الافتراضية
 let TikitM = [
@@ -94,6 +95,7 @@ function renderItems(list) {
 }
 
 function showCategory(cat) {
+  currentCategory = cat; // ← حفظ القسم الحالي
   if (cat === 'm') currentList = TikitM;
   else if (cat === 's') currentList = TikitS;
   else if (cat === 'sb') currentList = TikitSB;
@@ -114,34 +116,41 @@ function addClothingByMeter(item, price) {
     alert("⚠️ المرجو إدخال عدد أمتار صحيح!");
     return;
   }
-  updateBill(item, price, meters, true);
+  updateBill(item, price, meters, true, currentCategory);
 }
 
 function addClothing(item, price) {
   const quantity = selectedNumber || 1;
-  updateBill(item, price, quantity, false);
+  updateBill(item, price, quantity, false, currentCategory);
   selectedNumber = null;
   document.querySelectorAll('.numbers button').forEach(btn => btn.classList.remove('selected'));
 }
 
-function updateBill(item, price, amount, isMeter) {
+// ← تعديل دالة updateBill لتضمين القسم
+function updateBill(item, price, amount, isMeter, category = currentCategory) {
   const output = document.getElementById("output");
   if (!output) return;
   let lines = output.value.trim().split("\n").filter(l => l !== "");
   let updated = false;
   const unit = isMeter ? "متر " : "";
+  
+  // ← إنشاء معرّف فريد يتضمن القسم والاسم
+  const uniqueKey = `${category}|${item}`;
+  
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes(item)) {
+    // ← البحث عن القطعة باستخدام المعرّف الفريد
+    if (lines[i].includes(`[${uniqueKey}]`)) {
       let parts = lines[i].split(" ");
       let oldAmount = parseFloat(parts[0]);
       let newAmount = oldAmount + amount;
-      lines[i] = `${newAmount} ${unit}${item} ----------------->${price * newAmount}`;
+      lines[i] = `${newAmount} ${unit}${item} [${uniqueKey}] ----------------->${price * newAmount}`;
       updated = true;
       break;
     }
   }
   if (!updated) {
-    lines.push(`${amount} ${unit}${item} ----------------->${price * amount}`);
+    // ← إضافة المعرّف الفريد عند إنشاء سطر جديد
+    lines.push(`${amount} ${unit}${item} [${uniqueKey}] ----------------->${price * amount}`);
   }
   output.value = lines.join("\n");
   totalPrice += price * amount;
@@ -164,7 +173,6 @@ function clearAll() {
   if (whatsappNum) whatsappNum.value = "";
   if (clientName) clientName.value = "";
   document.querySelectorAll('.numbers button').forEach(btn => btn.classList.remove('selected'));
-  // إخفاء شريط الموعد
   const banner = document.getElementById("pickupBanner");
   if (banner) banner.style.display = "none";
 }
@@ -175,7 +183,7 @@ async function sendToWhatsapp() {
   const numElem = document.getElementById("whatsappNumber");
   const nameElem = document.getElementById("nameclione");
   if (!outputElem || !numElem) return;
-  const output = outputElem.value;
+  let output = outputElem.value;
   const number = numElem.value.trim();
   const name = nameElem ? nameElem.value.trim() : "";
   const isFast = document.getElementById("fastWash")?.checked || false;
@@ -191,7 +199,6 @@ async function sendToWhatsapp() {
   if (ridElem) ridElem.textContent = formattedId;
   localStorage.setItem('lastReceiptId', lastId);
 
-  // ← نضيف pickupDate للسجل
   const receiptRecord = {
     id: formattedId, date: dateString, name: name,
     number: number, content: output, total: totalPrice,
@@ -205,7 +212,11 @@ async function sendToWhatsapp() {
     tx.objectStore(storeName).put(receiptRecord);
   } catch (err) { console.error("❌ فشل الحفظ:", err); }
 
-  // ← نضيف الموعد لرسالة الواتساب إذا كان موجوداً
+  // ← إزالة المعرّفات الفريدة من الرسالة قبل الإرسال
+  output = output.split('\n').map(line => {
+    return line.replace(/\s\[.*?\]\s/, ' '); // إزالة [category|item]
+  }).join('\n');
+
   let pickupLine = "";
   if (selectedPickupDate) {
     const d = new Date(selectedPickupDate);
@@ -226,7 +237,6 @@ function openPickupModal() {
     alert('⚠️ المرجو اختيار الملابس أولاً.');
     return;
   }
-  // بناء أزرار الأيام السريعة
   const container = document.getElementById('quickDaysBtns');
   container.innerHTML = '';
   const labels = ['غدًا', 'بعد غد', '3 أيام', '4 أيام', '5 أيام', 'أسبوع'];
@@ -304,4 +314,3 @@ window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
   }
 });
-
