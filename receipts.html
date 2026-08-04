@@ -404,7 +404,7 @@
     q = q.toLowerCase();
     return list.filter(r =>
       (r.name && r.name.toLowerCase().includes(q)) ||
-      (r.number && r.number.includes(q))
+      (r.number && r.id.includes(q))
     );
   }
 
