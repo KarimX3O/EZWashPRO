@@ -224,7 +224,7 @@ async function sendToWhatsapp() {
     pickupLine = `\n📅 موعد الاستلام: ${formatted}`;
   }
 
-  let receiptContent = `السلام عليكم مصبنة البحر ترحب بيكم 👋\nوصل رقم: ${formattedId}\nالتاريخ: ${dateString}\nالاسم: ${name}\n\n${output}\n---------------------\n💰 المجموع: ${totalPrice} درهم${pickupLine}\n${isPaid ? "✅ تم الدفع" : ""}\nشكرا على ثقتكم 🙏`;
+  let receiptContent = `السلام عليكم مصبنة البهجة ترحب بيكم 👋\nوصل رقم: ${formattedId}\nالتاريخ: ${dateString}\nالاسم: ${name}\n\n${output}\n---------------------\n💰 المجموع: ${totalPrice} درهم${pickupLine}\n${isPaid ? "✅ تم الدفع" : ""}\nشكرا على ثقتكم 🙏`;
   let phone = number.startsWith("0") ? "212" + number.substring(1) : (number.startsWith("212") ? number : "212" + number);
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(receiptContent)}`, '_blank');
   clearAll();
