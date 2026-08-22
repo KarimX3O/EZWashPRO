@@ -26,7 +26,7 @@ function openDB() {
 let selectedNumber = null;
 let totalPrice = 0;
 let selectedPickupDate = null;
-let currentCategory = 'm'; // ← إضافة متغير لتتبع القسم الحالي
+let currentCategory = 'm'; // ← تتبع القسم الحالي
 
 // المصفوفات الافتراضية
 let TikitM = [
@@ -69,10 +69,26 @@ const dateElement = document.getElementById("todayDate");
 if (dateElement) dateElement.textContent = dateString;
 
 // --- 4. دالات العرض والتحكم ---
-function selectNumber(num) {
-  selectedNumber = num;
+
+// ✅ مُصححة: كتراكم الأرقام بدل ما تبدلها، وكتاخد event كـ parameter بدل الاعتماد على الـ global event
+function selectNumber(num, evt) {
+  selectedNumber = (selectedNumber || 0) * 10 + num;
+
+  // تحديث العرض المرئي للرقم المختار (لازم تزيد عنصر id="numberDisplay" فـ HTML)
+  const display = document.getElementById("numberDisplay");
+  if (display) display.textContent = selectedNumber;
+
+  // تفعيل شكل الزر المضغوط بدون مسح تحديد الأزرار السابقة
+  const e = evt || window.event;
+  if (e && e.target) e.target.classList.add('selected');
+}
+
+// ✅ جديدة: لمسح الرقم المُركّب في حالة الغلط (زر ❌ أو "مسح")
+function clearSelectedNumber() {
+  selectedNumber = null;
+  const display = document.getElementById("numberDisplay");
+  if (display) display.textContent = "";
   document.querySelectorAll('.numbers button').forEach(btn => btn.classList.remove('selected'));
-  if (event) event.target.classList.add('selected');
 }
 
 function createItemHTML(item) {
@@ -95,7 +111,7 @@ function renderItems(list) {
 }
 
 function showCategory(cat) {
-  currentCategory = cat; // ← حفظ القسم الحالي
+  currentCategory = cat;
   if (cat === 'm') currentList = TikitM;
   else if (cat === 's') currentList = TikitS;
   else if (cat === 'sb') currentList = TikitSB;
@@ -122,23 +138,19 @@ function addClothingByMeter(item, price) {
 function addClothing(item, price) {
   const quantity = selectedNumber || 1;
   updateBill(item, price, quantity, false, currentCategory);
-  selectedNumber = null;
-  document.querySelectorAll('.numbers button').forEach(btn => btn.classList.remove('selected'));
+  clearSelectedNumber(); // ✅ استعمال الدالة الموحدة بدل تكرار نفس السطرين
 }
 
-// ← تعديل دالة updateBill لتضمين القسم
 function updateBill(item, price, amount, isMeter, category = currentCategory) {
   const output = document.getElementById("output");
   if (!output) return;
   let lines = output.value.trim().split("\n").filter(l => l !== "");
   let updated = false;
   const unit = isMeter ? "متر " : "";
-  
-  // ← إنشاء معرّف فريد يتضمن القسم والاسم
+
   const uniqueKey = `${category}|${item}`;
-  
+
   for (let i = 0; i < lines.length; i++) {
-    // ← البحث عن القطعة باستخدام المعرّف الفريد
     if (lines[i].includes(`[${uniqueKey}]`)) {
       let parts = lines[i].split(" ");
       let oldAmount = parseFloat(parts[0]);
@@ -149,7 +161,6 @@ function updateBill(item, price, amount, isMeter, category = currentCategory) {
     }
   }
   if (!updated) {
-    // ← إضافة المعرّف الفريد عند إنشاء سطر جديد
     lines.push(`${amount} ${unit}${item} [${uniqueKey}] ----------------->${price * amount}`);
   }
   output.value = lines.join("\n");
@@ -166,13 +177,12 @@ function clearAll() {
   if (total) total.textContent = "المجموع: 0 درهم";
   if (receiptId) receiptId.textContent = "----";
   totalPrice = 0;
-  selectedNumber = null;
   selectedPickupDate = null;
+  clearSelectedNumber(); // ✅ موحّدة الآن، كتمسح selectedNumber والعرض والأزرار
   const whatsappNum = document.getElementById("whatsappNumber");
   const clientName = document.getElementById("nameclione");
   if (whatsappNum) whatsappNum.value = "";
   if (clientName) clientName.value = "";
-  document.querySelectorAll('.numbers button').forEach(btn => btn.classList.remove('selected'));
   const banner = document.getElementById("pickupBanner");
   if (banner) banner.style.display = "none";
 }
@@ -212,9 +222,8 @@ async function sendToWhatsapp() {
     tx.objectStore(storeName).put(receiptRecord);
   } catch (err) { console.error("❌ فشل الحفظ:", err); }
 
-  // ← إزالة المعرّفات الفريدة من الرسالة قبل الإرسال
   output = output.split('\n').map(line => {
-    return line.replace(/\s\[.*?\]\s/, ' '); // إزالة [category|item]
+    return line.replace(/\s\[.*?\]\s/, ' ');
   }).join('\n');
 
   let pickupLine = "";
@@ -228,6 +237,112 @@ async function sendToWhatsapp() {
   let phone = number.startsWith("0") ? "212" + number.substring(1) : (number.startsWith("212") ? number : "212" + number);
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(receiptContent)}`, '_blank');
   clearAll();
+}
+
+// --- 6.5 تعديل الوصل: حذف قطعة معينة أو تنقيص كميتها ---
+
+// يحلل سطور الوصل ويحولها لمصفوفة أشياء يسهل التعامل معها
+function parseBillLines() {
+  const output = document.getElementById("output");
+  if (!output) return [];
+  const re = /^([\d.]+) (متر )?(.+) \[(.+?)\] ----------------->([\d.]+)$/;
+  return output.value.trim().split("\n").filter(l => l !== "").map(line => {
+    const m = line.match(re);
+    if (!m) return null;
+    const amount = parseFloat(m[1]);
+    const subtotal = parseFloat(m[5]);
+    return {
+      amount,
+      isMeter: !!m[2],
+      itemName: m[3],
+      uniqueKey: m[4],
+      subtotal,
+      unitPrice: subtotal / amount // ← ثمن الوحدة محسوب من السطر نفسه
+    };
+  }).filter(Boolean);
+}
+
+// يعيد بناء نص الوصل انطلاقا من مصفوفة الأشياء
+function rebuildOutputFromItems(items) {
+  const output = document.getElementById("output");
+  if (!output) return;
+  output.value = items.map(it => {
+    const unit = it.isMeter ? "متر " : "";
+    return `${it.amount} ${unit}${it.itemName} [${it.uniqueKey}] ----------------->${it.subtotal}`;
+  }).join("\n");
+}
+
+// يعيد حساب المجموع الكلي انطلاقا من مصفوفة الأشياء
+function recalcTotal(items) {
+  totalPrice = items.reduce((sum, it) => sum + it.subtotal, 0);
+  const totalElem = document.getElementById("total");
+  if (totalElem) totalElem.textContent = `المجموع: ${totalPrice} درهم`;
+}
+
+// فتح نافذة تعديل الوصل
+function openEditBillModal() {
+  const items = parseBillLines();
+  if (items.length === 0) {
+    alert("⚠️ الوصل فارغ، ماكاين والو للتعديل.");
+    return;
+  }
+  renderEditBillList(items);
+  const modal = document.getElementById('editBillModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeEditBillModal() {
+  const modal = document.getElementById('editBillModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// يعرض لائحة القطع داخل نافذة التعديل، كل قطعة مع زر تنقيص وزر حذف كامل
+function renderEditBillList(items) {
+  const container = document.getElementById('editBillList');
+  if (!container) return;
+  container.innerHTML = '';
+  items.forEach((it, index) => {
+    const unitLabel = it.isMeter ? 'متر ' : '';
+    const row = document.createElement('div');
+    row.className = 'edit-bill-row';
+    row.innerHTML = `
+      <span class="edit-bill-name">${it.amount} ${unitLabel}${it.itemName}</span>
+      <span class="edit-bill-price">${it.subtotal}DH</span>
+      <div class="edit-bill-actions">
+        <button onclick="decreaseItemQty(${index})" title="تنقيص وحدة واحدة">➖</button>
+        <button onclick="deleteItemFully(${index})" title="حذف القطعة كاملة">🗑️</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// تنقيص وحدة واحدة من قطعة معينة (لو وحدة واحدة باقية كتحذف كاملة)
+function decreaseItemQty(index) {
+  const items = parseBillLines();
+  const it = items[index];
+  if (!it) return;
+  if (it.amount <= 1) {
+    items.splice(index, 1);
+  } else {
+    it.amount -= 1;
+    it.subtotal = +(it.unitPrice * it.amount).toFixed(2);
+  }
+  rebuildOutputFromItems(items);
+  recalcTotal(items);
+  if (items.length === 0) closeEditBillModal();
+  else renderEditBillList(items);
+}
+
+// حذف قطعة معينة بالكامل من الوصل بغض النظر عن الكمية
+function deleteItemFully(index) {
+  const items = parseBillLines();
+  if (!items[index]) return;
+  items.splice(index, 1);
+  rebuildOutputFromItems(items);
+  recalcTotal(items);
+  if (items.length === 0) closeEditBillModal();
+  else renderEditBillList(items);
 }
 
 // --- 7. الموعد: فتح وإغلاق وتأكيد ---
@@ -286,7 +401,7 @@ function showRecei() { window.location.href = 'items.html'; }
 function stats() { window.location.href = 'stats.html'; }
 function showPickup() { window.location.href = 'pickup.html'; }
 
-// --- 9. دالة جلب الأثمنة من قاعدة البيانات عند التشغيل ---
+// --- 9. جلب الأثمنة من قاعدة البيانات عند التشغيل ---
 async function loadPricesFromDB() {
   try {
     const db = await openDB();
