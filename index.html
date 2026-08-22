@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>الورقة الذكية</title>
-    <link rel="icon" type="image/jpg" href="https://karimx3o.github.io/pressingApp2/ezwash11.jpg" />
+    <link rel="icon" type="image/png" href="https://karimx3o.github.io/pressingApp2/karim.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css" type="text/css" media="all" />
 
@@ -176,6 +176,96 @@
         align-items: center;
         gap: 6px;
       }
+
+      /* ===== نافذة تعديل الوصل (حذف/تنقيص قطعة) ===== */
+      #editBillModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+        z-index: 999;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      #editBillList {
+        max-height: 320px;
+        overflow-y: auto;
+        margin-bottom: 14px;
+      }
+      .edit-bill-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 9px 6px;
+        border-bottom: 1px solid #eef4f7;
+        font-family: 'Cairo', sans-serif;
+      }
+      .edit-bill-name {
+        flex: 1;
+        font-size: 0.9rem;
+        color: #1a2530;
+        font-weight: 700;
+      }
+      .edit-bill-price {
+        font-size: 0.85rem;
+        color: #6b7f8f;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .edit-bill-actions {
+        display: flex;
+        gap: 6px;
+      }
+      .edit-bill-actions button {
+        border: 2px solid #d0e8f0;
+        background: white;
+        border-radius: 10px;
+        padding: 5px 9px;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+      #btn-edit-bill {
+        background: #6b7f8f;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 9px 14px;
+        font-family: 'Cairo', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 6px;
+        width: 100%;
+      }
+
+      /* ===== عرض الرقم المُركّب ===== */
+      #numberDisplayWrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      #numberDisplay {
+        min-width: 40px;
+        text-align: center;
+        font-family: 'Cairo', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: #1a6b8a;
+      }
+      #btn-clear-number {
+        background: #f5f5f5;
+        border: 2px solid #d0e8f0;
+        border-radius: 10px;
+        padding: 4px 10px;
+        font-family: 'Cairo', sans-serif;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #6b7f8f;
+        cursor: pointer;
+      }
     </style>
   </head>
 
@@ -218,6 +308,11 @@
 
         <textarea id="output" placeholder="الملابس المختارة..." readonly></textarea>
 
+        <!-- ← زر تعديل الوصل: حذف أو تنقيص قطعة معينة -->
+        <button id="btn-edit-bill" onclick="openEditBillModal()">
+          ✏️ تعديل / حذف قطعة من الوصل
+        </button>
+
         <!-- ← زر تحديد الموعد -->
         <button id="btn-pickup-date" onclick="openPickupModal()">
           📅 حدد موعد الاستلام
@@ -250,16 +345,23 @@
           <div class="tab" onclick="showCategory('sb')">🟣الصباغة</div>
         </div>
 
+        <!-- ← عرض الرقم المُركّب + زر مسح -->
+        <div id="numberDisplayWrap">
+          <span>الكمية:</span>
+          <span id="numberDisplay"></span>
+          <button id="btn-clear-number" onclick="clearSelectedNumber()">❌ مسح</button>
+        </div>
+
         <div class="numbers">
-          <button onclick="selectNumber(1)">1</button>
-          <button onclick="selectNumber(2)">2</button>
-          <button onclick="selectNumber(3)">3</button>
-          <button onclick="selectNumber(4)">4</button>
-          <button onclick="selectNumber(5)">5</button>
-          <button onclick="selectNumber(6)">6</button>
-          <button onclick="selectNumber(7)">7</button>
-          <button onclick="selectNumber(8)">8</button>
-          <button onclick="selectNumber(9)">9</button>
+          <button onclick="selectNumber(1, event)">1</button>
+          <button onclick="selectNumber(2, event)">2</button>
+          <button onclick="selectNumber(3, event)">3</button>
+          <button onclick="selectNumber(4, event)">4</button>
+          <button onclick="selectNumber(5, event)">5</button>
+          <button onclick="selectNumber(6, event)">6</button>
+          <button onclick="selectNumber(7, event)">7</button>
+          <button onclick="selectNumber(8, event)">8</button>
+          <button onclick="selectNumber(9, event)">9</button>
         </div>
 
         <div class="items" id="itemsContainer"></div>
@@ -273,6 +375,21 @@
     <div id="receiptsList" style="margin:20px;padding:10px;background:#eee;border-radius:10px;display:none;">
       <h3>📜 قائمة الوصولات السابقة:</h3>
       <ul id="receiptsUl" style="list-style:none;padding:0"></ul>
+    </div>
+
+    <!-- ===== Modal تعديل الوصل ===== -->
+    <div id="editBillModal">
+      <div class="modal-box">
+        <div class="modal-handle"></div>
+        <div class="modal-title">✏️ تعديل الوصل</div>
+        <p class="modal-label">➖ لتنقيص وحدة واحدة، 🗑️ لحذف القطعة كاملة</p>
+
+        <div id="editBillList"></div>
+
+        <div class="modal-actions">
+          <button class="btn-confirm-modal" onclick="closeEditBillModal()" style="flex:1">✅ تم</button>
+        </div>
+      </div>
     </div>
 
     <!-- ===== Modal تحديد الموعد ===== -->
